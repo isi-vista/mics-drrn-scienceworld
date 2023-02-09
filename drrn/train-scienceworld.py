@@ -49,7 +49,7 @@ def evaluate(agent, args, env_step_limit, bufferedHistorySaverEval, extraSaveInf
 
         avg_score = total_score / nb_episodes
         
-        env.shutdown()
+        # env.shutdown()
         
         return scoresOut, avg_score
 
@@ -289,8 +289,14 @@ def main():
 
     # Initialize the save buffers
     taskIdx = args.task_idx
-    bufferedHistorySaverTrain = BufferedHistorySaver(filenameOutPrefix = args.historySavePrefix + "-task" + str(taskIdx) + "-train")
-    bufferedHistorySaverEval = BufferedHistorySaver(filenameOutPrefix = args.historySavePrefix + "-task" + str(taskIdx) + "-eval")
+    seed_val = args.seed
+    common_file_path = f"{args.output_dir}/{args.historySavePrefix}-task_{taskIdx}-seed_{seed_val}"
+    output_file_train = common_file_path + "-train"
+    output_file_eval = common_file_path + "-eval"
+    print(f"Output file train: {output_file_train}")
+    print(f"Output file eval: {output_file_eval}")
+    bufferedHistorySaverTrain = BufferedHistorySaver(filenameOutPrefix=output_file_train)
+    bufferedHistorySaverEval = BufferedHistorySaver(filenameOutPrefix=output_file_eval)
 
     # Start training
     start = timeit.default_timer()

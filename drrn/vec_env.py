@@ -36,48 +36,61 @@ def sanitizeObservation(obsIn, infoIn):
 #
 # Reset the environment (with a new randomly selected variation)
 #
-def resetWithVariation(env, variationMin, variationMax, simplificationStr):    
+def resetWithVariation(env: ScienceWorldEnv, variationMin, variationMax, simplificationStr):
     variationIdx = random.randrange(variationMin, variationMax)          # train on range 0-20    
     env.reset()        
-    initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
+    # initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
+    task_name = env.taskName
+    env.load(taskName=task_name, variationIdx=variationIdx, simplificationStr=simplificationStr)
+    initialObs, initialDict = env.reset()
     print("Simplifications: " + env.getSimplificationsUsed() )
     
     return initialObs, initialDict
 
 def resetWithVariationTrain(env, simplificationStr):
     variationIdx = env.getRandomVariationTrain()        ## Random variation on train
-    env.reset()    
-    initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
+    env.reset()
+    task_name = env.taskName
+    env.load(taskName=task_name, variationIdx=variationIdx, simplificationStr=simplificationStr)
+    initialObs, initialDict = env.reset()
+    # initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
     print("Simplifications: " + env.getSimplificationsUsed() )
 
     return initialObs, initialDict    
 
 def resetWithVariationDev(env, simplificationStr):
     variationIdx = env.getRandomVariationDev()          ## Random variation on dev
-    env.reset()        
-    initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
+    env.reset()
+    task_name = env.taskName
+    env.load(taskName=task_name, variationIdx=variationIdx, simplificationStr=simplificationStr)
+    initialObs, initialDict = env.reset()
+    # initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
     print("Simplifications: " + env.getSimplificationsUsed() )
     
     return initialObs, initialDict    
 
 def resetWithVariationTest(env, simplificationStr):    
     variationIdx = env.getRandomVariationTest()        ## Random variation on test
-    env.reset()        
-    initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
+    env.reset()
+    task_name = env.taskName
+    env.load(taskName=task_name, variationIdx=variationIdx, simplificationStr=simplificationStr)
+    initialObs, initialDict = env.reset()
+    # initialObs, initialDict = env.resetWithVariation(variationIdx, simplificationStr)
     print("Simplifications: " + env.getSimplificationsUsed() )
     
     return initialObs, initialDict    
 
 # Initialize a ScienceWorld environment directly from the API
 def initializeEnv(threadNum, args):    
-    env = ScienceWorldEnv("", None, args.env_step_limit, threadNum)
+    env = ScienceWorldEnv("", None, args.env_step_limit)
 
     taskNames = env.getTaskNames()    
     taskName = taskNames[args.task_idx]
 
     # Just reset to variation 0, as another call (e.g. resetWithVariation...) will setup an appropriate variation (train/dev/test)
     env.load(taskName, 0, args.simplification_str)
-    initialObs, initialDict = resetWithVariation(env, 0, 1, args.simplification_str)
+    # initialObs, initialDict = resetWithVariation(env, 0, 1, args.simplification_str)
+    initialObs, initialDict = env.reset()
 
     return env
 
@@ -147,7 +160,7 @@ def worker(remote, parent_remote, threadNum, args):
                 
             elif cmd == 'close':
                 print ("------------------------------------ CLOSE (Thread " + str(threadNum) + ")")
-                env.shutdown()  # Shut down ScienceWorld server for this thread
+                # env.shutdown()  # Shut down ScienceWorld server for this thread
                 time.sleep(2)
                 break
 
@@ -158,7 +171,7 @@ def worker(remote, parent_remote, threadNum, args):
         print('SubprocVecEnv worker: got KeyboardInterrupt')
     finally:
         print ("------------------------------------ SHUTDOWN (Thread " + str(threadNum) + ")")
-        env.shutdown()  # Shut down ScienceWorld server for this thread
+        # env.shutdown()  # Shut down ScienceWorld server for this thread
         time.sleep(2)
 
 
