@@ -8,6 +8,7 @@ import argparse
 from drrn import DRRN_Agent
 from vec_env import VecEnv
 import random
+from pathlib import Path
 
 from scienceworld import ScienceWorldEnv, BufferedHistorySaver
 from vec_env import resetWithVariation, resetWithVariationDev, resetWithVariationTest, initializeEnv, sanitizeInfo, sanitizeObservation
@@ -273,6 +274,8 @@ def parse_args():
 
     parser.add_argument('--simplification_str', default='', type=str)
 
+    parser.add_argument('--load_from_checkpoint', default='')
+
     return parser.parse_args()
 
 
@@ -283,6 +286,17 @@ def main():
     print(args)
     configure_logger(args.output_dir)    
     agent = DRRN_Agent(args)
+    if args.load_from_checkpoint != '':
+        checkpoint_name = "NOT_FOUND"
+        for file in Path(args.load_from_checkpoint).iterdir():
+            if file.suffix == ".pt":
+                checkpoint_name = "-"+"-".join(file.stem.split("-")[1:])
+
+        agent.load(args.load_from_checkpoint, checkpoint_name)
+        num_completed_steps = int(checkpoint_name.split("-")[1].replace("steps", "")) // args.num_envs
+        num_steps_to_go = args.max_steps - num_completed_steps
+    else:
+        num_steps_to_go = args.max_steps
 
     # Initialize a threaded wrapper for the ScienceWorld environment
     envs = VecEnv(args.num_envs, args)
@@ -301,7 +315,7 @@ def main():
     # Start training
     start = timeit.default_timer()
 
-    train(agent, envs, args.max_steps, args.update_freq, args.eval_freq,
+    train(agent, envs, num_steps_to_go, args.update_freq, args.eval_freq,
           args.checkpoint_freq, args.log_freq, args, bufferedHistorySaverTrain, bufferedHistorySaverEval)
 
     end = timeit.default_timer()
