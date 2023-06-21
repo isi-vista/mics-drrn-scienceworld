@@ -3,6 +3,7 @@ import timeit
 import torch
 import logger
 import argparse
+from pathlib import Path
 from drrn import DRRN_Agent
 from vec_env import VecEnv
 
@@ -49,7 +50,7 @@ def evaluate(agent, args, env_step_limit, bufferedHistorySaverEval, extraSaveInf
             print("Starting evaluation episode " + str(ep) + " / " + str(len(eps)))
             extraSaveInfo['evalIdx'] = ep
             score = evaluate_episode(agent, env, env_step_limit, args.simplification_str,
-                                     bufferedHistorySaverEval, extraSaveInfo, args.eval_set, ep)
+                                     bufferedHistorySaverEval, extraSaveInfo, args.eval_set, ep, args.save_actions)
             log("Evaluation episode {} ended with score {}\n\n".format(ep, score))
             total_score += score
             scoresOut.append(total_score)
@@ -63,7 +64,9 @@ def evaluate(agent, args, env_step_limit, bufferedHistorySaverEval, extraSaveInf
 
 
 def evaluate_episode(agent, env, env_step_limit, simplificationStr, bufferedHistorySaverEval,
-                     extraSaveInfo, evalSet, variation):
+                     extraSaveInfo, evalSet, variation, actions_save_dir):
+    actions_save_file = actions_save_dir / f"{env.taskName}_{variation}.txt"
+    actions = []
     step = 0
     done = False
     numSteps = 0
@@ -97,6 +100,7 @@ def evaluate_episode(agent, env, env_step_limit, simplificationStr, bufferedHist
                 break
 
         log('Q-Values: {}'.format(s))
+        actions.append(action_str)
         ob, rew, done, info = env.step(action_str)
         info = sanitizeInfo(info)
         ob = sanitizeObservation(ob, info)
@@ -114,6 +118,7 @@ def evaluate_episode(agent, env, env_step_limit, simplificationStr, bufferedHist
 
     print("Completed one evaluation episode")
     # Save
+    actions_save_file.write_text("\n".join(actions))
     runHistory = env.getRunHistory()
     episodeIdx = str(extraSaveInfo['evalIdx'])
     bufferedHistorySaverEval.storeRunHistory(runHistory, episodeIdx, notes=extraSaveInfo)
@@ -149,6 +154,7 @@ def parse_args():
 
     parser.add_argument("--model_path", required=True)
     parser.add_argument("--model_name", required=True, type=str)
+    parser.add_argument("--save_actions", default=None, type=Path)
 
     return parser.parse_args()
 
